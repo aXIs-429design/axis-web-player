@@ -1,0 +1,10 @@
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Streamlit local settings
+.streamlit/config.toml
+# .streamlit/secrets.toml (秘密情報を含める場合は必ず無視)
+
+# OS generated files
+.DS_Store
