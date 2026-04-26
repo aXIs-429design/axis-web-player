@@ -107,12 +107,14 @@ def render_player(playlist):
             document.getElementById('stream-name').innerText = "SOURCE: " + t.stream_title;
 
             if (!player) {{
+                // 【初期化時】自動再生をオフにする
                 player = new YT.Player('player', {{
                     height: '100%', width: '100%', videoId: t.video_id,
-                    playerVars: {{ 'start': t.start, 'autoplay': 1, 'controls': 1, 'rel': 0 }},
+                    playerVars: {{ 'start': t.start, 'autoplay': 0, 'controls': 1, 'rel': 0 }},
                     events: {{ 'onStateChange': (e) => {{ if(e.data == YT.PlayerState.ENDED) loadTrack(currentIndex+1); }} }}
                 }});
             }} else {{
+                // 【リストクリック時】即座に再生を開始する
                 player.loadVideoById({{ videoId: t.video_id, startSeconds: t.start }});
             }}
             renderPlaylist();
