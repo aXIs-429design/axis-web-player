@@ -20,10 +20,10 @@ def render_player(playlist):
                     <div style="display: flex; justify-content: space-between; align-items: flex-end;">
                         <div style="flex: 1;">
                             <p id="stream-name" 
-   onclick="openSourceVideo()" 
-   style="font-size: 0.75rem; color: #7B1FA2; margin: 0; font-weight: 700; letter-spacing: 2px; font-family: 'Courier New', monospace; cursor: pointer; display: inline-block; user-select: none;" 
-   title="YouTubeで配信画面を開く">
-</p>
+                                onclick="openSourceVideo()" 
+                                style="font-size: 0.75rem; color: #7B1FA2; margin: 0; font-weight: 700; letter-spacing: 2px; font-family: 'Courier New', monospace; cursor: pointer; display: inline-block; user-select: none;" 
+                                title="YouTubeで配信画面を開く">
+                            </p>
                             <h2 id="song-title" style="margin: 5px 0; font-size: 1.8rem; font-weight: 800; color: #FFFFFF; text-shadow: 0 0 10px rgba(178, 135, 253, 0.3);">Selecting...</h2>
                             
                             <div style="display: flex; align-items: center; gap: 15px; margin-top: 5px;">
@@ -68,7 +68,7 @@ def render_player(playlist):
                             <div class="custom-options" id="sort-options-container">
                                 <div class="custom-option selected" data-value="newest" onclick="selectSortOption('newest', '最新順')">最新順</div>
                                 <div class="custom-option" data-value="oldest" onclick="selectSortOption('oldest', '古い順')">古い順</div>
-                                <div class="custom-option" data-value="hot" onclick="selectSortOption('hot', 'おすすめ（盛り上がり順）')">おすすめ（盛り上がり順）</div>
+                                <div class="custom-option" data-value="hot" onclick="selectSortOption('hot', 'おすすめ順')">おすすめ順</div>
                             </div>
                         </div>
                     </div>
@@ -150,12 +150,12 @@ def render_player(playlist):
         }};
 
         window.openSourceVideo = function() {{
-    var t = filteredTracks[currentIndex];
-    if (t && t.video_id) {{
-        var url = "https://www.youtube.com/watch?v=" + t.video_id + "&t=" + t.start + "s";
-        window.open(url, '_blank');
-    }}
-}};
+            var t = filteredTracks[currentIndex];
+            if (t && t.video_id) {{
+                var url = "https://www.youtube.com/watch?v=" + t.video_id + "&t=" + t.start + "s";
+                window.open(url, '_blank');
+            }}
+        }};
 
         window.toggleSelect = function() {{
             var wrapper = document.getElementById('stream-select-wrapper');
@@ -304,11 +304,10 @@ def render_player(playlist):
         #playlist-items::-webkit-scrollbar-track, .custom-options::-webkit-scrollbar-track {{ background: #050505; }}
         #playlist-items::-webkit-scrollbar-thumb, .custom-options::-webkit-scrollbar-thumb {{ background: #4A148C; border-radius: 10px; }}
         #playlist-items::-webkit-scrollbar-thumb:hover, .custom-options::-webkit-scrollbar-thumb:hover {{ background: #7B1FA2; }}
-        /* styleタグの中に追加 */
-#stream-name:hover {{
-    color: #B287FD !important;
-    text-decoration: underline;
-}}
+        #stream-name:hover {{
+        color: #B287FD !important;
+        text-decoration: underline;
+        }}
     </style>
     """
     return components.html(html_code, height=900)

@@ -6,7 +6,7 @@ def get_singing_playlist():
     # パスの設定
     base_dir = os.path.dirname(__file__)
     db_path = os.path.join(os.getcwd(), 'utawaku.db')
-    csv_path = os.path.join(base_dir, 'data', 'song_durations.csv')
+    csv_path = os.path.join(base_dir, 'song_durations.csv')
 
     # 1. CSVから曲の長さを読み込む
     song_durations = {}
@@ -55,7 +55,7 @@ def get_singing_playlist():
     for row in rows:
         db_title = row['title'].strip() # DB側の空白対策
         duration = song_durations.get(db_title, 240) # 念のためdb_titleで検索
-        row['end'] = row['start'] + duration + 5
+        row['end'] = row['start'] + duration + 10
         # 配信日から日付（先頭10文字）だけを抽出して新しくキーを作る
         row['date_short'] = row['published_at'][:10] if row['published_at'] else "Unknown"
         playlist.append(row)
