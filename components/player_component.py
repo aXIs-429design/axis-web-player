@@ -46,7 +46,15 @@ def render_player(playlist):
                         </div>
                     </div>
                     
-                    <input type="text" id="search-input" placeholder="曲名・歌手を検索..." style="width: 100%; box-sizing: border-box; padding: 10px; background: #1A0A23; border: 1px solid #7B1FA2; color: #D1C4E9; border-radius: 6px; outline: none; font-size: 0.8rem; margin-bottom: 12px; transition: 0.3s;">
+                    <div style="position: relative; margin-bottom: 12px;">
+    <input type="text" id="search-input" placeholder="曲名・歌手を検索..." 
+           style="width: 100%; box-sizing: border-box; padding: 10px 35px 10px 10px; background: #1A0A23; border: 1px solid #7B1FA2; color: #D1C4E9; border-radius: 6px; outline: none; font-size: 0.8rem; transition: 0.3s;">
+    
+    <span id="clear-search" onclick="clearSearch()" 
+          style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #7B1FA2; cursor: pointer; font-size: 1.2rem; display: none; user-select: none; transition: 0.2s;">
+        &times;
+    </span>
+</div>
                     
                     <div class="custom-select-wrapper" id="stream-select-wrapper">
                         <div class="custom-select-trigger" onclick="toggleSelect()">
@@ -230,6 +238,22 @@ def render_player(playlist):
             document.getElementById('search-input').addEventListener('input', () => applyFilters());
         }}
 
+        // クリアボタンの動作
+window.clearSearch = function() {{
+    const input = document.getElementById('search-input');
+    input.value = "";
+    document.getElementById('clear-search').style.display = 'none';
+    input.focus();
+    applyFilters(); // フィルタをリセット
+}};
+
+// 入力イベントでボタンの表示/非表示を切り替え
+document.getElementById('search-input').addEventListener('input', (e) => {{
+    const clearBtn = document.getElementById('clear-search');
+    clearBtn.style.display = e.target.value ? 'block' : 'none';
+    applyFilters();
+}});
+
         function renderPlaylist() {{
             var container = document.getElementById('playlist-items');
             if (!container) return;
@@ -308,6 +332,10 @@ def render_player(playlist):
         color: #B287FD !important;
         text-decoration: underline;
         }}
+        #clear-search:hover {{
+    color: #B287FD !important;
+    text-shadow: 0 0 5px #7B1FA2;
+}}
     </style>
     """
     return components.html(html_code, height=900)
