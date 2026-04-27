@@ -37,7 +37,8 @@ def get_singing_playlist():
         s.stream_title, 
         s.published_at,
         l.stream_id as video_id, 
-        l.start_time as start
+        l.start_time as start,
+        l.density
     FROM t_singing_logs l
     JOIN m_contents m ON l.content_id = m.content_id
     JOIN t_streams s ON l.stream_id = s.stream_id
@@ -54,7 +55,7 @@ def get_singing_playlist():
     for row in rows:
         db_title = row['title'].strip() # DB側の空白対策
         duration = song_durations.get(db_title, 240) # 念のためdb_titleで検索
-        row['end'] = row['start'] + duration + 10
+        row['end'] = row['start'] + duration + 5
         # 配信日から日付（先頭10文字）だけを抽出して新しくキーを作る
         row['date_short'] = row['published_at'][:10] if row['published_at'] else "Unknown"
         playlist.append(row)
