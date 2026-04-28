@@ -96,6 +96,8 @@ def render_player(playlist):
         var isPlaylistVisible = true;
         var currentFilterVal = "All";
         var trackStartTime = 0;
+        // --- 修正：変数の未定義エラーを防ぐために追加 ---
+        var debounceTimer = null;
 
         if (!window.ytApiLoaded) {{
             var tag = document.createElement('script'); tag.src = "https://www.youtube.com/iframe_api";
@@ -209,33 +211,72 @@ def render_player(playlist):
             applyFilters();
         }};
 
+        // --- 修正箇所1: applyFilters（初期表示を確実にするためのチェックを追加） ---
         function applyFilters() {{
-            var q = document.getElementById('search-input').value.toLowerCase();
+            var q = document.getElementById('search-input') ? document.getElementById('search-input').value.toLowerCase() : "";
             var streamVal = currentFilterVal;
+            
             filteredTracks = allTracks.filter(t => {{
                 var matchSearch = t.title.toLowerCase().includes(q) || (t.artist && t.artist.toLowerCase().includes(q));
                 var matchStream = (!streamVal || streamVal === "All") || (t.date_short + " │ " + t.stream_title === streamVal);
                 return matchSearch && matchStream;
             }});
+
             if (currentKey) {{
                 var foundIndex = filteredTracks.findIndex(t => (t.video_id + t.start) === currentKey);
                 currentIndex = foundIndex;
             }}
-            renderPlaylist();
+
+            window.requestAnimationFrame(() => {{
+                renderPlaylist();
+                var clearBtn = document.getElementById('clear-search');
+                if (clearBtn) {{
+                    clearBtn.style.display = q ? 'block' : 'none';
+                }}
+            }});
         }}
 
+        // --- 修正箇所2: setupFilters（変数エラーの修正と実行順序の整理） ---
         function setupFilters() {{
             var container = document.getElementById('stream-options-container');
+            if (!container) return; // 要素がない場合は中断
+
             var streamMap = new Map();
-            allTracks.forEach(t => {{ var key = t.date_short + " │ " + t.stream_title; streamMap.set(key, true); }});
+            allTracks.forEach(t => {{ 
+                var key = t.date_short + " │ " + t.stream_title; 
+                streamMap.set(key, true); 
+            }});
+            
             Array.from(streamMap.keys()).sort().reverse().forEach(key => {{
                 var div = document.createElement('div');
                 div.className = 'custom-option';
                 div.innerText = key;
-                div.onclick = (e) => selectOption(key, key);
+                div.onclick = (e) => {{ 
+                    e.stopPropagation(); 
+                    selectOption(key, key); 
+                }};
                 container.appendChild(div);
             }});
-            document.getElementById('search-input').addEventListener('input', () => applyFilters());
+
+            var searchInput = document.getElementById('search-input');
+            if (searchInput) {{
+                searchInput.addEventListener('input', () => {{
+                    if (debounceTimer) clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(applyFilters, 150);
+                }});
+            }}
+
+            // セレクトボックスのイベント設定（デザイン維持のため元のセレクタを使用）
+            var trigger = document.querySelector('.custom-select-trigger');
+            if (trigger) {{
+                trigger.onclick = (e) => {{
+                    e.stopPropagation();
+                    toggleSelect();
+                }};
+            }}
+
+            // 最後に初期描画を実行
+            applyFilters();
         }}
 
         // クリアボタンの動作
@@ -324,9 +365,9 @@ document.getElementById('search-input').addEventListener('input', (e) => {{
         .custom-option.selected {{ color: #B287FD; background: #1A0A23; font-weight: bold; }}
         .arrow {{ width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid #4A148C; transition: 0.3s; }}
         .open .arrow {{ transform: rotate(180deg); border-top-color: #B287FD; }}
-        #playlist-items::-webkit-scrollbar, .custom-options::-webkit-scrollbar {{ width: 6px; }}
+        #playlist-items::-webkit-scrollbar, .custom-options::-webkit-scrollbar {{ width: 10px; }}
         #playlist-items::-webkit-scrollbar-track, .custom-options::-webkit-scrollbar-track {{ background: #050505; }}
-        #playlist-items::-webkit-scrollbar-thumb, .custom-options::-webkit-scrollbar-thumb {{ background: #4A148C; border-radius: 10px; }}
+        #playlist-items::-webkit-scrollbar-thumb, .custom-options::-webkit-scrollbar-thumb {{ background: #4A148C; border-radius: 10px; border: 2px solid #050505;}}
         #playlist-items::-webkit-scrollbar-thumb:hover, .custom-options::-webkit-scrollbar-thumb:hover {{ background: #7B1FA2; }}
         #stream-name:hover {{
         color: #B287FD !important;

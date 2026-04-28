@@ -33,11 +33,11 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 all_playlist = get_playlist_cached() # キャッシュ版を呼び出すように変更
-if all_playlist:
+#if all_playlist:
     # 初期状態として最新順にソートして渡す
-    df = pd.DataFrame(all_playlist)
-    if not df.empty:
-        df = df.sort_values(["date_short", "stream_title", "start"], ascending=[False, False, True])
-        all_playlist = df.to_dict('records')
-    
-    render_player(all_playlist)
+    #df = pd.DataFrame(all_playlist)
+    #if not df.empty:
+    #    df = df.sort_values(["date_short", "stream_title", "start"], ascending=[False, False, True])
+    #    all_playlist = df.to_dict('records')
+
+render_player(all_playlist)
