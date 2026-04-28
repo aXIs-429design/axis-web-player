@@ -3,6 +3,12 @@ import pandas as pd
 from data.database import get_singing_playlist
 from components.player_component import render_player
 
+# キャッシュ機能の定義
+# ttl=3600 は1時間キャッシュを保持するという意味です
+@st.cache_data(ttl=3600)
+def get_playlist_cached():
+    return get_singing_playlist()
+
 st.set_page_config(
     page_title="aXIs Web Player", 
     page_icon="🦋", 
@@ -26,7 +32,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-all_playlist = get_singing_playlist()
+all_playlist = get_playlist_cached() # キャッシュ版を呼び出すように変更
 if all_playlist:
     # 初期状態として最新順にソートして渡す
     df = pd.DataFrame(all_playlist)
