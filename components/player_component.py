@@ -46,14 +46,25 @@ def render_player(playlist):
                         </div>
                     </div>
                     
-                    <div style="position: relative; margin-bottom: 12px;">
-    <input type="text" id="search-input" placeholder="曲名・歌手を検索..." 
-           style="width: 100%; box-sizing: border-box; padding: 10px 35px 10px 10px; background: #1A0A23; border: 1px solid #7B1FA2; color: #D1C4E9; border-radius: 6px; outline: none; font-size: 0.8rem; transition: 0.3s;">
-    
-    <span id="clear-search" onclick="clearSearch()" 
-          style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #7B1FA2; cursor: pointer; font-size: 1.2rem; display: none; user-select: none; transition: 0.2s;">
-        &times;
-    </span>
+                    <div style="display: flex; gap: 8px; margin-bottom: 12px; height: 38px;">
+    <div style="position: relative; flex-grow: 1;">
+        <input type="text" id="search-input" placeholder="曲名・歌手を検索..." 
+               style="width: 100%; height: 100%; box-sizing: border-box; padding: 10px 35px 10px 10px; background: #1A0A23; border: 1px solid #7B1FA2; color: #D1C4E9; border-radius: 6px; outline: none; font-size: 0.8rem;">
+        <span id="clear-search" onclick="clearSearch()" 
+              style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #7B1FA2; cursor: pointer; font-size: 1.2rem; display: none;">
+            &times;
+        </span>
+    </div>
+
+    <div id="shuffle-toggle" onclick="toggleShuffle()" title="ランダム再生">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 3 21 3 21 8"></polyline>
+            <line x1="4" y1="20" x2="21" y2="3"></line>
+            <polyline points="21 16 21 21 16 21"></polyline>
+            <line x1="15" y1="15" x2="21" y2="21"></line>
+            <line x1="4" y1="4" x2="9" y2="9"></line>
+        </svg>
+    </div>
 </div>
                     
                     <div class="custom-select-wrapper" id="stream-select-wrapper">
@@ -98,6 +109,39 @@ def render_player(playlist):
         var trackStartTime = 0;
         // --- 修正：変数の未定義エラーを防ぐために追加 ---
         var debounceTimer = null;
+        var isShuffle = false;
+
+        // --- 切り替え関数 ---
+window.toggleShuffle = function() {{
+    isShuffle = !isShuffle;
+    var btn = document.getElementById('shuffle-toggle');
+    if (isShuffle) {{
+        btn.classList.add('active');
+        console.log("Shuffle Mode: ON");
+    }} else {{
+        btn.classList.remove('active');
+        console.log("Shuffle Mode: OFF");
+    }}
+}};
+
+// --- 共通の「次の曲へ」ロジック ---
+        window.playNext = function() {{
+            if (filteredTracks.length === 0) return;
+
+            if (isShuffle && filteredTracks.length > 1) {{
+                var nextIndex;
+                // 現在の曲と違う曲が出るまで回す
+                do {{
+                    nextIndex = Math.floor(Math.random() * filteredTracks.length);
+                }} while (nextIndex === currentIndex);
+                loadTrack(nextIndex);
+            }} else {{
+                // 通常再生（最後の曲なら最初に戻る、などの処理も可。今回は次がなければ停止）
+                if (currentIndex < filteredTracks.length - 1) {{
+                    loadTrack(currentIndex + 1);
+                }}
+            }}
+        }};
 
         if (!window.ytApiLoaded) {{
             var tag = document.createElement('script'); tag.src = "https://www.youtube.com/iframe_api";
@@ -125,7 +169,7 @@ def render_player(playlist):
                     document.getElementById('timer-bar').style.width = Math.min(100, (currentTime / endTime) * 100) + "%";
 
                     if (remaining <= 0.8 && (Date.now() - trackStartTime > 3000)) {{
-                        loadTrack(currentIndex + 1);
+                        playNext();
                     }}
                 }} else {{
                     document.getElementById('timer-label').innerText = "LIVE / CALIBRATING...";
@@ -133,6 +177,7 @@ def render_player(playlist):
             }}
         }}
 
+        // YouTube APIのイベントを修正
         window.loadTrack = function(index) {{
             if (filteredTracks.length === 0 || index >= filteredTracks.length) return;
             
@@ -144,14 +189,17 @@ def render_player(playlist):
             document.getElementById('song-title').innerText = t.title;
             document.getElementById('artist-name').innerText = t.artist || "";
             document.getElementById('stream-name').innerText = "SOURCE: " + t.stream_title;
-            // 配信日を代入
             document.getElementById('stream-date').innerText = t.date_short;
 
             if (!player) {{
                 player = new YT.Player('player', {{
                     height: '100%', width: '100%', videoId: t.video_id,
-                    playerVars: {{ 'start': t.start, 'autoplay': 0, 'controls': 1, 'rel': 0 }},
-                    events: {{ 'onStateChange': (e) => {{ if(e.data == YT.PlayerState.ENDED) loadTrack(currentIndex+1); }} }}
+                    playerVars: {{ 'start': t.start, 'autoplay': 1, 'controls': 1, 'rel': 0 }},
+                    events: {{ 
+                        'onStateChange': (e) => {{ 
+                            if(e.data == YT.PlayerState.ENDED) playNext(); // 次へロジックを呼び出す
+                        }} 
+                    }}
                 }});
             }} else {{
                 player.loadVideoById({{ videoId: t.video_id, startSeconds: t.start }});
@@ -377,6 +425,32 @@ document.getElementById('search-input').addEventListener('input', (e) => {{
     color: #B287FD !important;
     text-shadow: 0 0 5px #7B1FA2;
 }}
+#shuffle-toggle {{
+            background: #1A0A23;
+            border: 1px solid #7B1FA2;
+            border-radius: 6px;
+            width: 38px;
+            height: 38px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #7B1FA2; /* 通常時のアイコンの色 */
+            transition: 0.2s;
+        }}
+
+        /* ホバー時は少し色が明るくなるだけ */
+        #shuffle-toggle:hover {{
+            border-color: #B287FD;
+            color: #B287FD;
+        }}
+
+        /* ON状態：背景が紫になり、アイコンが白くなる（浮き出しなし） */
+        #shuffle-toggle.active {{
+            background: #4A148C;
+            border-color: #B287FD;
+            color: #FFFFFF;
+        }}
     </style>
     """
     return st.iframe(html_code, height=900)
