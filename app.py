@@ -1,13 +1,27 @@
 import streamlit as st
 import pandas as pd
+import datetime
+import time
 from data.database import get_singing_playlist
 from components.player_component import render_player
+
+
+# --- サーバー側ログ出力用関数 ---
+def log_status(message, level="INFO"):
+    current_time = datetime.datetime.now().strftime('%H:%M:%S')
+    print(f"[{current_time}] [{level}] {message}")
+
+log_status("=== App Sequence Started ===")
+boot_start = time.time()
 
 # キャッシュ機能の定義
 # ttl=3600 は1時間キャッシュを保持するという意味です
 @st.cache_data(ttl=3600)
 def get_playlist_cached():
-    return get_singing_playlist()
+    log_status("Cache missed or expired. Fetching data from database...", "DEBUG")
+    data = get_singing_playlist()
+    log_status(f"Database query complete. Found {len(data)} items.", "SUCCESS")
+    return data
 
 st.set_page_config(
     page_title="aXIs Web Player", 
@@ -32,12 +46,26 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-all_playlist = get_playlist_cached() # キャッシュ版を呼び出すように変更
-#if all_playlist:
-    # 初期状態として最新順にソートして渡す
-    #df = pd.DataFrame(all_playlist)
-    #if not df.empty:
-    #    df = df.sort_values(["date_short", "stream_title", "start"], ascending=[False, False, True])
-    #    all_playlist = df.to_dict('records')
+# --- データ取得フェーズ ---
+try:
+    load_start = time.time()
+    all_playlist = get_playlist_cached()
+    
+    if not all_playlist:
+        log_status("Playlist is empty after loading!", "WARNING")
+    else:
+        # データの整合性チェック（最初の1件をサンプルとしてログ出し）
+        sample = all_playlist[0]
+        log_status(f"Payload ready: {len(all_playlist)} tracks.")
+        log_status(f"Sample Check: Title='{sample.get('title')}', Date='{sample.get('date_short')}'", "DEBUG")
 
+except Exception as e:
+    log_status(f"Critical error during boot: {str(e)}", "ERROR")
+    all_playlist = []
+
+# --- コンポーネント描画フェーズ ---
+log_status("Injecting data into Player Component...")
 render_player(all_playlist)
+
+boot_end = time.time()
+log_status(f"=== App Ready (Total Time: {boot_end - boot_start:.2f}s) ===")

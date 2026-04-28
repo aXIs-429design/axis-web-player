@@ -19,7 +19,6 @@ def get_singing_playlist():
                     # 曲名にカンマがあっても、row['title'] に正しく入ります
                     title = row['title'].strip()
                     song_durations[title] = int(row['duration_sec'])
-                    print(f"DEBUG: Loaded {len(song_durations)} songs from CSV.")
                 except (ValueError, KeyError):
                     continue
 

@@ -1,4 +1,4 @@
-import streamlit.components.v1 as components
+import streamlit as st
 import json
 
 def render_player(playlist):
@@ -379,4 +379,4 @@ document.getElementById('search-input').addEventListener('input', (e) => {{
 }}
     </style>
     """
-    return components.html(html_code, height=900)
+    return st.iframe(html_code, height=900)
