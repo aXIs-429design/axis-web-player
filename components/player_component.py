@@ -14,7 +14,9 @@ def render_player(playlist):
                 <div id="now-playing" style="margin-top: 20px;">
                     <div id="timer-display" style="font-family: 'Courier New', monospace; font-size: 0.7rem; color: #9575CD; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
                         <span id="timer-label" style="letter-spacing: 1px;">INITIALIZING...</span>
-                        <div style="flex:1; height:2px; background:#1A0A23;"><div id="timer-bar" style="width:0%; height:100%; background:#B287FD; box-shadow: 0 0 8px #7B1FA2; transition: width 0.5s;"></div></div>
+                        <div onclick="seekVideo(event)" style="flex:1; height:6px; background:#1A0A23; border-radius:3px; cursor:pointer; position:relative;">
+        <div id="timer-bar" style="width:0%; height:100%; background:#B287FD; box-shadow: 0 0 8px #7B1FA2; transition: width 0.5s linear; border-radius:3px;"></div>
+    </div>
                     </div>
 
                     <div style="display: flex; justify-content: space-between; align-items: flex-end;">
@@ -111,6 +113,27 @@ def render_player(playlist):
         var debounceTimer = null;
         var isShuffle = false;
 
+        // --- シーク機能（クリックで再生位置を移動） ---
+        window.seekVideo = function(event) {{
+            if (!player || typeof player.getDuration !== 'function') return;
+
+            const bar = event.currentTarget;
+            const rect = bar.getBoundingClientRect();
+            const offsetX = event.clientX - rect.left; // バー内のクリック位置
+            const width = rect.width;
+            const percentage = offsetX / width; // クリックされた割合
+
+            var t = filteredTracks[currentIndex];
+            var duration = player.getDuration();
+            var startTime = t.start || 0;
+            // 終了時間が指定されていればその範囲内で、なければ動画全体で計算
+            var endTime = (t && t.end && t.end > t.start) ? t.end : duration;
+            
+            var targetTime = startTime + ((endTime - startTime) * percentage);
+            
+            player.seekTo(targetTime, true);
+        }};
+        
         // --- 切り替え関数 ---
 window.toggleShuffle = function() {{
     isShuffle = !isShuffle;
@@ -155,18 +178,26 @@ window.toggleShuffle = function() {{
             setInterval(monitorPlayback, 800); 
         }};
 
-        function monitorPlayback() {{
+function monitorPlayback() {{
             if (!player || typeof player.getCurrentTime !== 'function') return;
             var state = player.getPlayerState();
             if (state === YT.PlayerState.PLAYING || state === YT.PlayerState.BUFFERING) {{
                 var currentTime = player.getCurrentTime();
                 var t = filteredTracks[currentIndex];
+                var startTime = t.start || 0; // 開始秒数を取得
                 var endTime = (t && t.end) ? t.end : player.getDuration();
 
-                if (endTime > 0 && endTime > t.start) {{
+                if (endTime > 0 && endTime > startTime) {{
+                    // --- ここから修正 ---
+                    var totalDuration = endTime - startTime; // 曲の正味の長さ
+                    var currentPos = currentTime - startTime; // 開始地点からの経過
+                    var progress = Math.max(0, Math.min(100, (currentPos / totalDuration) * 100));
+                    
+                    document.getElementById('timer-bar').style.width = progress + "%";
+                    // --- ここまで修正 ---
+
                     var remaining = Math.max(0, Math.floor(endTime - currentTime));
                     document.getElementById('timer-label').innerText = "NEXT IN: " + remaining + "s";
-                    document.getElementById('timer-bar').style.width = Math.min(100, (currentTime / endTime) * 100) + "%";
 
                     if (remaining <= 0.8 && (Date.now() - trackStartTime > 3000)) {{
                         playNext();
@@ -393,14 +424,37 @@ document.getElementById('search-input').addEventListener('input', (e) => {{
         .ctrl-btn {{ background-color: #1A0A23; color: #B287FD; border: 1px solid #7B1FA2; border-radius: 4px; font-size: 0.55rem; padding: 3px 6px; cursor: pointer; transition: 0.3s; font-family: 'Courier New', monospace; letter-spacing: 1px; }}
         .ctrl-btn:hover {{ border: 1px solid #B287FD; box-shadow: 0 0 10px #7B1FA2; color: #FFFFFF; }}
         #search-input:focus {{ border-color: #B287FD !important; box-shadow: 0 0 8px rgba(123, 31, 162, 0.5); }}
-        .playlist-row {{ display: flex; align-items: flex-start; padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #0D0512; margin-bottom: 2px; border-radius: 4px; transition: 0.2s; background: #050505; }}
-        .playlist-row:hover {{ background: #1A0A23; border-color: #7B1FA2; }}
+        /* プレイリスト行の背景変化を高速化 */
+        .playlist-row {{ 
+            display: flex; 
+            align-items: flex-start; 
+            padding: 12px 15px; 
+            cursor: pointer; 
+            border-bottom: 1px solid #0D0512; 
+            margin-bottom: 2px; 
+            border-radius: 4px; 
+            transition: background 0.1s ease; /* 0.2sから短縮 */
+            background: #050505; 
+        }}
+        .playlist-row:hover .track-details {{ 
+            max-height: 40px; /* 120pxから必要最小限に短縮 */
+            opacity: 1; 
+            margin-top: 4px; 
+        }}
         .track-index {{ flex: 0 0 35px; font-size: 0.7rem; color: #4A148C; margin-top: 2px; font-family: 'Courier New', monospace; }}
         .track-name {{ font-size: 0.85rem; color: #D1C4E9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }}
         .active-track {{ background: #1A0A23 !important; border-left: 3px solid #B287FD; box-shadow: inset 0 0 10px rgba(123, 31, 162, 0.2); }}
         .active-track .track-index {{ color: #B287FD; text-shadow: 0 0 5px #7B1FA2; }}
         .active-track .track-name {{ color: #FFFFFF; font-weight: bold; }}
-        .track-details {{ font-size: 0.65rem; max-height: 0; opacity: 0; overflow: hidden; transition: 0.3s ease; color: #9575CD; }}
+        /* 詳細情報の表示をキビキビさせる */
+        .track-details {{ 
+            font-size: 0.65rem; 
+            max-height: 0; 
+            opacity: 0; 
+            overflow: hidden; 
+            transition: max-height 0.15s ease-out, opacity 0.1s ease-out; /* 0.3sから短縮 */
+            color: #9575CD; 
+        }}
         .playlist-row:hover .track-details {{ max-height: 120px; opacity: 1; margin-top: 6px; }}
         .stream-title-sub {{ color: #7B1FA2; opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: 0.2s; }}
         .playlist-row:hover .stream-title-sub {{ white-space: normal; color: #9575CD; }}
