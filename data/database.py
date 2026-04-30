@@ -18,7 +18,10 @@ def get_singing_playlist():
                 try:
                     # 曲名にカンマがあっても、row['title'] に正しく入ります
                     title = row['title'].strip()
-                    song_durations[title] = int(row['duration_sec'])
+                    artist = row['artist'].strip() # アーティスト名も取得
+                    # タイトルとアーティストを組み合わせて一意のキーを作る
+                    key = f"{title}_{artist}"
+                    song_durations[key] = int(row['duration_sec'])
                 except (ValueError, KeyError):
                     continue
 
@@ -53,10 +56,19 @@ def get_singing_playlist():
     # 3. 終了時間の計算 (開始秒数 + 曲の長さ + 10秒)
     playlist = []
     for row in rows:
-        db_title = row['title'].strip() # DB側の空白対策
-        duration = song_durations.get(db_title, 240) # 念のためdb_titleで検索
+        db_title = row['title'].strip()
+        db_artist = row['artist'].strip() # アーティスト名を取得
+        
+        # タイトル+アーティスト名で検索
+        key = f"{db_title}_{db_artist}"
+        duration = song_durations.get(key)
+        
+        # もし見つからなければ、タイトルのみで検索（フォールバック）
+        if duration is None:
+            # CSVの構造上、タイトルのみの検索が必要な場合の予備ロジック
+            duration = song_durations.get(db_title, 240) 
+
         row['end'] = row['start'] + duration + 10
-        # 配信日から日付（先頭10文字）だけを抽出して新しくキーを作る
         row['date_short'] = row['published_at'][:10] if row['published_at'] else "Unknown"
         playlist.append(row)
         
