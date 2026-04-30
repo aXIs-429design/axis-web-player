@@ -48,7 +48,7 @@ def render_player(playlist):
                     
                     <div style="display: flex; gap: 8px; margin-bottom: 12px; height: 38px;">
     <div style="position: relative; flex-grow: 1;">
-        <input type="text" id="search-input" placeholder="曲名・歌手を検索..." 
+        <input type="text" id="search-input" value="XIDEN" placeholder="曲名・歌手を検索..." 
                style="width: 100%; height: 100%; box-sizing: border-box; padding: 10px 35px 10px 10px; background: #1A0A23; border: 1px solid #7B1FA2; color: #D1C4E9; border-radius: 6px; outline: none; font-size: 0.8rem;">
         <span id="clear-search" onclick="clearSearch()" 
               style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #7B1FA2; cursor: pointer; font-size: 1.2rem; display: none;">

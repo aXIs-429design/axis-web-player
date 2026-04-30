@@ -41,7 +41,8 @@ def get_singing_playlist():
     FROM t_singing_logs l
     JOIN m_contents m ON l.content_id = m.content_id
     JOIN t_streams s ON l.stream_id = s.stream_id
-    WHERE m.artist = 'XIDEN' 
+    /*WHERE m.artist = 'XIDEN' */
+    WHERE m.category = 'Singing'
     ORDER BY s.published_at DESC, l.start_time ASC
     """
     
