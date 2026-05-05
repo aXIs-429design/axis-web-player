@@ -384,7 +384,7 @@ document.getElementById('search-input').addEventListener('input', (e) => {{
                 html += `<div onclick="loadTrack(${{i}})" class="playlist-row ${{isActive ? 'active-track' : ''}}">
                     <span class="track-index">${{i + 1}}</span>
                     <div class="track-info-container">
-                        <span class="track-name">${{item.title}}</span>
+                        <span class="track-name">${{item.title}} / ${{item.artist}}</span>
                         <div class="track-details">
                             <div>${{item.date_short}}</div>
                             <div class="stream-title-sub">${{item.stream_title}}</div>
@@ -440,6 +440,7 @@ document.getElementById('search-input').addEventListener('input', (e) => {{
             max-height: 40px; /* 120pxから必要最小限に短縮 */
             opacity: 1; 
             margin-top: 4px; 
+            transition-delay: 0s;
         }}
         .track-index {{ flex: 0 0 35px; font-size: 0.7rem; color: #4A148C; margin-top: 2px; font-family: 'Courier New', monospace; }}
         .track-name {{ font-size: 0.85rem; color: #D1C4E9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }}
@@ -452,7 +453,7 @@ document.getElementById('search-input').addEventListener('input', (e) => {{
             max-height: 0; 
             opacity: 0; 
             overflow: hidden; 
-            transition: max-height 0.15s ease-out, opacity 0.1s ease-out; /* 0.3sから短縮 */
+            transition: max-height 0.15s ease-out, opacity 0.1s ease-out 0.3s; /* 0.3sから短縮 */
             color: #9575CD; 
         }}
         .playlist-row:hover .track-details {{ max-height: 120px; opacity: 1; margin-top: 6px; }}
